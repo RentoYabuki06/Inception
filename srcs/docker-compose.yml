@@ -14,6 +14,7 @@ services:
       - inception-net
     depends_on:
       - wordpress
+
   mariadb:
     build: ./requirements/mariadb
     container_name: mariadb
@@ -27,6 +28,7 @@ services:
       - mariadb_data:/var/lib/mysql
     networks:
       - inception-net
+
   wordpress:
     build: ./requirements/wordpress
     container_name: wordpress
@@ -38,12 +40,30 @@ services:
       WORDPRESS_DB_NAME: wordpress
       WORDPRESS_DB_USER: wpuser
       WORDPRESS_DB_PASSWORD: wppass
+      WP_ADMIN_USER: admin
+      WP_ADMIN_PASSWORD: adminpass
+      WP_ADMIN_EMAIL: admin@42.fr
+      WP_USER: user
+      WP_USER_PASSWORD: userpass
+      WP_USER_EMAIL: user@42.fr
+    volumes:
+      - wordpress_data:/var/www/html
     networks:
       - inception-net
 
 volumes:
   mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/yabukirento/data/mariadb
   wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/yabukirento/data/wordpress
 
 networks:
   inception-net:
