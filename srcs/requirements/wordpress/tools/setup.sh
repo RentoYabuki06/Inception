@@ -23,5 +23,5 @@ if [ ! -f /var/www/html/wp-config.php ]; then
         --allow-root
 fi
 
-# PHP-FPM起動
-php-fpm7.4 -F
+# PHP-FPM起動（バージョン番号を8.2に変更）
+php-fpm8.2 -F
