@@ -1,0 +1,31 @@
+# Docker関連
+srcs/**/tmp
+srcs/**/__pycache__/
+srcs/**/node_modules/
+srcs/**/.DS_Store
+*.log
+
+# 環境変数ファイル（セキュリティ対策）
+srcs/.env
+
+# OSごとのゴミファイル
+.DS_Store
+
+# バックアップファイル
+*~
+
+# VirtualBox関連（絶対にGitに入れない）
+*.vbox
+*.vbox-prev
+*.vdi
+*.iso
+*.cfg
+*.sh
+Unattended-*
+
+# その他、不要ファイルもあわせて除外
+*.log
+*.tmp
+.DS_Store
+
+
