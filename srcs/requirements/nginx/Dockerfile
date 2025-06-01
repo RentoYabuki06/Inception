@@ -9,4 +9,8 @@ COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY tools/setup.sh /setup.sh
 
 RUN chmod +x /setup.sh
+
+RUN mkdir -p /etc/ssl/private && \
+    mkdir -p /etc/nginx/ssl
+
 CMD ["bash", "/setup.sh"]
