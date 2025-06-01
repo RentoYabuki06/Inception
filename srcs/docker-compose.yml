@@ -57,13 +57,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /home/rento/data/mariadb
+      device: /home/rento/Inception/srcs/data/mariadb
   wordpress_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/rento/data/wordpress
+      device: /home/rento/Inception/srcs/data/wordpress
 
 networks:
   inception-net:
