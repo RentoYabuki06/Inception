@@ -1,9 +1,23 @@
 version: '3.8'
 
 services:
+  nginx:
+    build: ./requirements/nginx
+    container_name: nginx
+    restart: always
+    volumes:
+      - wordpress_data:/var/www/html:ro
+      - ./secrets:/etc/ssl/private:ro
+    ports:
+      - "443:443"
+    networks:
+      - inception-net
+    depends_on:
+      - wordpress
   mariadb:
     build: ./requirements/mariadb
     container_name: mariadb
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: wordpress
@@ -13,10 +27,10 @@ services:
       - mariadb_data:/var/lib/mysql
     networks:
       - inception-net
-
   wordpress:
     build: ./requirements/wordpress
     container_name: wordpress
+    restart: always
     depends_on:
       - mariadb
     environment:
@@ -24,13 +38,12 @@ services:
       WORDPRESS_DB_NAME: wordpress
       WORDPRESS_DB_USER: wpuser
       WORDPRESS_DB_PASSWORD: wppass
-    ports:
-      - "8080:80"
     networks:
       - inception-net
 
 volumes:
   mariadb_data:
+  wordpress_data:
 
 networks:
   inception-net:
