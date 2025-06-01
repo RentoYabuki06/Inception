@@ -28,4 +28,4 @@ Unattended-*
 *.tmp
 .DS_Store
 
-
+!srcs/requirements/nginx/tools/setup.sh
