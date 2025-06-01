@@ -8,9 +8,5 @@ if [ ! -f /etc/nginx/ssl/server.crt ]; then
     -subj "/C=JP/ST=Tokyo/L=Tokyo/O=42/CN=localhost"
 fi
 
-# 証明書のパスを設定
-ssl_certificate /etc/nginx/ssl/server.crt;
-ssl_certificate_key /etc/nginx/ssl/server.key;
-
 # 起動
 nginx -g "daemon off;"
