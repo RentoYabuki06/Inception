@@ -31,11 +31,12 @@ RUN sed -i 's/listen = \/run\/php\/php8.2-fpm.sock/listen = 9000/' /etc/php/8.2/
 
 # 作業ディレクトリの準備
 RUN mkdir -p /var/www/html && \
-    chown -R www-data:www-data /var/www/html && \
-    chmod -R 755 /var/www/html
+    chown www-data:www-data /var/www/html && \
+    chmod 755 /var/www/html
 
 COPY tools/setup.sh /setup.sh
-RUN chmod +x /setup.sh
+RUN chmod +x /setup.sh && \
+    chown www-data:www-data /setup.sh
 
 WORKDIR /var/www/html
 

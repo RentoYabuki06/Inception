@@ -94,10 +94,13 @@ else
     echo "WordPress is already configured. Skipping setup."
 fi
 
-# 権限の設定
-chown -R www-data:www-data /var/www/html
-find /var/www/html -type d -exec chmod 755 {} \;
-find /var/www/html -type f -exec chmod 644 {} \;
+# 権限の設定（www-dataユーザーで実行されているため、sudoは不要）
+if [ -w "/var/www/html" ]; then
+    find /var/www/html -type d -exec chmod 755 {} \;
+    find /var/www/html -type f -exec chmod 644 {} \;
+else
+    echo "Warning: Unable to set permissions on /var/www/html (insufficient permissions)"
+fi
 
 echo "Starting PHP-FPM..."
 exec php-fpm8.2 -F
