@@ -6,7 +6,7 @@ services:
     container_name: nginx
     restart: always
     volumes:
-      - /home/ryabuki/data/wordpress:/var/www/html:ro
+      - wordpress_data:/var/www/html:ro
       - ../secrets:/etc/ssl/private:ro
     ports:
       - "443:443"
@@ -25,7 +25,7 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - /home/ryabuki/data/mariadb:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql
     networks:
       - inception-net
 
@@ -48,17 +48,13 @@ services:
       WP_USER_EMAIL: ${WP_USER_EMAIL}
       DOMAIN_NAME: ${DOMAIN_NAME}
     volumes:
-      - /home/ryabuki/data/wordpress:/var/www/html
+      - wordpress_data:/var/www/html
     networks:
       - inception-net
 
 volumes:
   wordpress_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /home/ryabuki/data/wordpress
+  mariadb_data:
 
 networks:
   inception-net:
