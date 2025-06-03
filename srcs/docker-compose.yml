@@ -7,7 +7,7 @@ services:
     restart: always
     volumes:
       - /home/ryabuki/data/wordpress:/var/www/html:ro
-      - ./secrets:/etc/ssl/private:ro
+      - ../secrets:/etc/ssl/private:ro
     ports:
       - "443:443"
     networks:
