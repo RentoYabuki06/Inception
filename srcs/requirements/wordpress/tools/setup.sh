@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# エラーが発生したら即座に終了
+set -e
+
 # 環境変数のデバッグ出力
 echo "=== WordPress Setup Debug ==="
 echo "WORDPRESS_DB_HOST: '${WORDPRESS_DB_HOST}'"
@@ -37,17 +40,29 @@ DB_HOST=$(echo $WORDPRESS_DB_HOST | cut -d: -f1)
 DB_PORT=$(echo $WORDPRESS_DB_HOST | cut -d: -f2)
 DB_PORT=${DB_PORT:-3306}
 
+max_tries=30
+count=0
 while ! nc -z $DB_HOST $DB_PORT; do
-    echo "Waiting for MariaDB at $DB_HOST:$DB_PORT..."
+    echo "Waiting for MariaDB at $DB_HOST:$DB_PORT... (attempt $((count+1))/$max_tries)"
     sleep 3
+    count=$((count+1))
+    if [ $count -ge $max_tries ]; then
+        echo "ERROR: MariaDB connection timeout after $max_tries attempts"
+        exit 1
+    fi
 done
 
 echo "MariaDB is ready! Proceeding with WordPress setup..."
 
+# PHP-FPM設定ディレクトリの作成
+mkdir -p /run/php
+
 # WordPressのダウンロードと設定
-if [ ! -f /var/www/html/wp-config.php ]; then
+cd /var/www/html
+
+if [ ! -f wp-config.php ]; then
     echo "Downloading WordPress core..."
-    wp core download --allow-root
+    wp core download --allow-root --force
     
     echo "Creating WordPress configuration..."
     wp config create \
@@ -55,7 +70,8 @@ if [ ! -f /var/www/html/wp-config.php ]; then
         --dbuser=$WORDPRESS_DB_USER \
         --dbpass=$WORDPRESS_DB_PASSWORD \
         --dbhost=$WORDPRESS_DB_HOST \
-        --allow-root
+        --allow-root \
+        --force
     
     echo "Installing WordPress..."
     wp core install \
@@ -64,18 +80,24 @@ if [ ! -f /var/www/html/wp-config.php ]; then
         --admin_user=$WP_ADMIN_USER \
         --admin_password=$WP_ADMIN_PASSWORD \
         --admin_email=$WP_ADMIN_EMAIL \
-        --allow-root
+        --allow-root \
+        --skip-email
         
     echo "Creating additional WordPress user..."
     wp user create $WP_USER $WP_USER_EMAIL \
         --user_pass=$WP_USER_PASSWORD \
-        --allow-root
+        --allow-root \
+        --porcelain
         
     echo "WordPress setup completed successfully!"
 else
     echo "WordPress is already configured. Skipping setup."
 fi
 
+# 権限の設定
+chown -R www-data:www-data /var/www/html
+find /var/www/html -type d -exec chmod 755 {} \;
+find /var/www/html -type f -exec chmod 644 {} \;
+
 echo "Starting PHP-FPM..."
-# PHP-FPM起動（バージョン番号を8.2に変更）
-php-fpm8.2 -F
+exec php-fpm8.2 -F
