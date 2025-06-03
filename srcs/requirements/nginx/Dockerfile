@@ -15,6 +15,8 @@ RUN chmod +x /setup.sh
 RUN mkdir -p /etc/ssl/private && \
     mkdir -p /etc/nginx/ssl
 
+ENV DOMAIN_NAME=localhost
+
 EXPOSE 443
 
 CMD ["bash", "/setup.sh"]
