@@ -29,10 +29,18 @@ RUN (curl -f -L https://github.com/wp-cli/wp-cli/releases/download/v2.10.0/wp-cl
 # PHP-FPM設定
 RUN sed -i 's/listen = \/run\/php\/php8.2-fpm.sock/listen = 9000/' /etc/php/8.2/fpm/pool.d/www.conf
 
+# 作業ディレクトリの準備
+RUN mkdir -p /var/www/html && \
+    chown -R www-data:www-data /var/www/html && \
+    chmod -R 755 /var/www/html
+
 COPY tools/setup.sh /setup.sh
 RUN chmod +x /setup.sh
 
 WORKDIR /var/www/html
+
+# www-dataユーザーとして実行
+USER www-data
 
 EXPOSE 9000
 
