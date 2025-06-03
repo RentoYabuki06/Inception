@@ -42,7 +42,7 @@ DB_PORT=${DB_PORT:-3306}
 
 max_tries=30
 count=0
-while ! nc -z $DB_HOST $DB_PORT; do
+while ! mysqladmin ping -h"$DB_HOST" -P"$DB_PORT" -u"$WORDPRESS_DB_USER" -p"$WORDPRESS_DB_PASSWORD" --silent; do
     echo "Waiting for MariaDB at $DB_HOST:$DB_PORT... (attempt $((count+1))/$max_tries)"
     sleep 3
     count=$((count+1))
