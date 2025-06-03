@@ -6,7 +6,7 @@ services:
     container_name: nginx
     restart: always
     volumes:
-      - wordpress_data:/var/www/html:ro
+      - /home/ryabuki/data/wordpress:/var/www/html:ro
       - ./secrets:/etc/ssl/private:ro
     ports:
       - "443:443"
