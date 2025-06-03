@@ -27,12 +27,15 @@ RUN (curl -f -L https://github.com/wp-cli/wp-cli/releases/download/v2.10.0/wp-cl
     && wp --info
 
 # PHP-FPM設定
-RUN sed -i 's/listen = \/run\/php\/php8.2-fpm.sock/listen = 9000/' /etc/php/8.2/fpm/pool.d/www.conf
+RUN sed -i 's/listen = \/run\/php\/php8.2-fpm.sock/listen = 9000/' /etc/php/8.2/fpm/pool.d/www.conf && \
+    sed -i 's/;error_log = php_errors.log/error_log = \/proc\/self\/fd\/2/' /etc/php/8.2/fpm/php-fpm.conf && \
+    sed -i 's/;error_log = syslog/error_log = \/proc\/self\/fd\/2/' /etc/php/8.2/fpm/php.ini
 
-# 作業ディレクトリの準備
-RUN mkdir -p /var/www/html && \
-    chown www-data:www-data /var/www/html && \
-    chmod 755 /var/www/html
+# 必要なディレクトリの作成と権限設定
+RUN mkdir -p /var/www/html /run/php /var/log/php8.2-fpm && \
+    chown -R www-data:www-data /var/www/html /run/php /var/log/php8.2-fpm && \
+    chmod -R 755 /var/www/html /run/php && \
+    chmod -R 777 /var/log/php8.2-fpm
 
 COPY tools/setup.sh /setup.sh
 RUN chmod +x /setup.sh && \
