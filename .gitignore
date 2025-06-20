@@ -5,9 +5,6 @@ srcs/**/node_modules/
 srcs/**/.DS_Store
 *.log
 
-# 環境変数ファイル（セキュリティ対策）
-srcs/.env
-
 # OSごとのゴミファイル
 .DS_Store
 
