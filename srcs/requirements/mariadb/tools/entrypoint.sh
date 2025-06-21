@@ -22,7 +22,7 @@ fi
 # MariaDBデータディレクトリの初期化
 if [ ! -d "/var/lib/mysql/mysql" ]; then
     echo "Initializing MariaDB data directory..."
-    mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+    mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql > /dev/null
 fi
 
 # MariaDBをバックグラウンドで起動（初期状態：パスワードなし）
