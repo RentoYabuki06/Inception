@@ -35,4 +35,4 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # WordPressをPHP-FPMのフォアグラウンドモード(-F)で起動
 ENTRYPOINT [ "entrypoint.sh" ]
-CMD [ "php-fpm81", "-F" ]
+CMD [ "php-fpm8.2", "-F" ]
