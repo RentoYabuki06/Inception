@@ -1,7 +1,6 @@
 #!/bin/bash
 
 echo "=== WordPress Setup Debug ==="
-...
 
 # MariaDB が立ち上がるまで待つ
 echo "Waiting for mariadb:3306 to be ready..."
