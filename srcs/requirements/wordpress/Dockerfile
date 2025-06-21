@@ -26,6 +26,9 @@ RUN (curl -f -L https://github.com/wp-cli/wp-cli/releases/download/v2.10.0/wp-cl
     && mv wp-cli.phar /usr/local/bin/wp \
     && wp --info
 
+# PHP-FPM設定ファイルをコピー
+COPY conf/www.conf /etc/php/8.2/fpm/pool.d/www.conf
+
 # WordPress 初期設定やプラグイン導入などを行うエントリーポイントスクリプト
 COPY tools/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
