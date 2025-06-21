@@ -5,7 +5,6 @@ services:
     build:
       context: ./requirements/nginx
       dockerfile: Dockerfile
-    container_name: nginx
     restart: always
     volumes:
       - /home/${LOGIN}/data/wordpress:/var/www/html
@@ -21,7 +20,6 @@ services:
     build:
       context: ./requirements/mariadb
       dockerfile: Dockerfile
-    container_name: mariadb
     restart: always
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
@@ -37,7 +35,6 @@ services:
     build:
       context: ./requirements/wordpress
       dockerfile: Dockerfile
-    container_name: wordpress
     restart: always
     depends_on:
       - mariadb
