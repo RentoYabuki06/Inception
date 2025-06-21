@@ -25,6 +25,6 @@ Unattended-*
 *.tmp
 .DS_Store
 
-!srcs/requirements/mariadb/tools/setup.sh
-!srcs/requirements/nginx/tools/setup.sh
-!srcs/requirements/wordpress/tools/setup.sh
+!srcs/requirements/mariadb/tools/entrypoint.sh
+!srcs/requirements/nginx/tools/entrypoint.sh
+!srcs/requirements/wordpress/tools/entrypoint.sh
