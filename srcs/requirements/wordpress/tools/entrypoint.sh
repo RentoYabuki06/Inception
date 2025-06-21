@@ -1,5 +1,17 @@
 #!/bin/bash
 
+echo "=== WordPress Setup Debug ==="
+...
+
+# MariaDB が立ち上がるまで待つ
+echo "Waiting for mariadb:3306 to be ready..."
+for i in {1..30}; do
+    nc -z mariadb 3306 && echo "mariadb is up!" && break
+    echo "Waiting... ($i)"
+    sleep 1
+done
+
+
 # エラーが発生したら即座に終了
 set -e
 
