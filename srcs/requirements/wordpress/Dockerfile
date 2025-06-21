@@ -26,23 +26,10 @@ RUN (curl -f -L https://github.com/wp-cli/wp-cli/releases/download/v2.10.0/wp-cl
     && mv wp-cli.phar /usr/local/bin/wp \
     && wp --info
 
-# PHP-FPM設定
-COPY conf/www.conf /etc/php/8.2/fpm/pool.d/www.conf
+# WordPress 初期設定やプラグイン導入などを行うエントリーポイントスクリプト
+COPY tools/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# 必要なディレクトリの作成と権限設定
-RUN mkdir -p /var/www/html /run/php && \
-    chown -R www-data:www-data /var/www/html /run/php && \
-    chmod -R 755 /var/www/html /run/php
-
-COPY tools/setup.sh /setup.sh
-RUN chmod +x /setup.sh && \
-    chown www-data:www-data /setup.sh
-
-WORKDIR /var/www/html
-
-# www-dataユーザーとして実行
-USER www-data
-
-EXPOSE 9000
-
-CMD ["/setup.sh"]
+# WordPressをPHP-FPMのフォアグラウンドモード(-F)で起動
+ENTRYPOINT [ "entrypoint.sh" ]
+CMD [ "php-fpm81", "-F" ]
