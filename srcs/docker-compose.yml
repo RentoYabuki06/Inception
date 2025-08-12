@@ -1,9 +1,10 @@
 version: '3.8'
 
+# 依存関係的にmariadb→wordpress→nginxの順番でコンテナ起動
 services:
   nginx:
     build:
-      context: ./requirements/nginx
+      context: ./requirements/nginx # Dockerfile内のCOPYやADDで参照できる範囲を指定
       dockerfile: Dockerfile
     restart: always
     volumes:
@@ -21,7 +22,7 @@ services:
       context: ./requirements/mariadb
       dockerfile: Dockerfile
     restart: always
-    environment:
+    environment: # 初期DB構築用の値を*.envから注入
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - MYSQL_USER=${MYSQL_USER}
@@ -39,7 +40,7 @@ services:
     depends_on:
       - mariadb
     environment:
-      - WORDPRESS_DB_HOST=mariadb
+      - WORDPRESS_DB_HOST=mariadb # 仮想ネットワーク上ではサービス名が自動でDNS登録される
       - WORDPRESS_DB_NAME=${MYSQL_DATABASE}
       - WORDPRESS_DB_USER=${MYSQL_USER}
       - WORDPRESS_DB_PASSWORD=${MYSQL_PASSWORD}
@@ -49,10 +50,10 @@ services:
       - WP_USER_PASSWORD=${WP_USER_PASSWORD}
       - DOMAIN_NAME=${DOMAIN_NAME}
     volumes:
-      - /home/${LOGIN}/data/wordpress:/var/www/html
+      - /home/${LOGIN}/data/wordpress:/var/www/html # nginxと同じ参照先
     networks:
       - inception_network
 
 networks:
   inception_network:
-    driver: bridge
+    driver: bridge 
