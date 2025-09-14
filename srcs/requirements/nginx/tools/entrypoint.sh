@@ -26,7 +26,7 @@ fi
 # RSA暗号のRSAは発明者3人の頭文字らしい。素因数分解が非常に困難な大きな整数を用いている
 
 echo "Waiting for wordpress:9000 to be ready..."
-for i in $(seq 1 30); do
+for i in $(seq 1 60); do
     if nc -z wordpress 9000; then echo "wordpress is up!"; break; fi
     echo "Waiting... ($i)"; sleep 1
 done
