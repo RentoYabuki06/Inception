@@ -12,6 +12,8 @@ services:
       # - ../secrets:/etc/ssl/private:ro
     ports:
       - "443:443"
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
     networks:
       - inception_network
     depends_on:
