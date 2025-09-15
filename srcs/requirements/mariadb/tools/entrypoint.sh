@@ -31,13 +31,20 @@ chown -R mysql:mysql /var/lib/mysql || true
 # MariaDBをバックグラウンドで起動（初期状態：パスワードなし）
 echo "Starting MariaDB (bootstrap)..."
 # 最初は外部からの接続を受けないようにしつつ起動
-mysqld_safe --datadir=/var/lib/mysql --skip-networking &
+mysqld_safe --datadir=/var/lib/mysql --skip-networking --skip-grant-tables &
 
 # MariaDBが起動するまで待機
 echo "Waiting for MariaDB to start..."
 sleep 5
+max_wait_attempts=30
+wait_count=0
 while ! mysql -u root -e "SELECT 1;" >/dev/null 2>&1; do
-    echo "Waiting for MariaDB connection..."
+    echo "Waiting for MariaDB connection... (attempt $((wait_count+1))/$max_wait_attempts)"
+    wait_count=$((wait_count+1))
+    if [ $wait_count -ge $max_wait_attempts ]; then
+        echo "ERROR: MariaDB startup timeout after $max_wait_attempts attempts"
+        exit 1
+    fi
     sleep 2
 done
 
