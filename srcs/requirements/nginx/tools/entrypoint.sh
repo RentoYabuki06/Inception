@@ -2,6 +2,24 @@
 
 set -e
 
+# デフォルトサイト（ポート80）を無効化 - 42プロジェクト要件でHTTPSのみ許可
+if [ -L /etc/nginx/sites-enabled/default ]; then
+    rm /etc/nginx/sites-enabled/default
+    echo "Removed default site configuration (port 80)"
+elif [ -f /etc/nginx/sites-enabled/default ]; then
+    rm /etc/nginx/sites-enabled/default
+    echo "Removed default site configuration file (port 80)"
+fi
+
+# sites-enabledディレクトリ内の他の設定ファイルもチェック（念のため）
+if [ -d /etc/nginx/sites-enabled ]; then
+    for site in /etc/nginx/sites-enabled/*; do
+        if [ -f "$site" ] && grep -q "listen.*80" "$site" 2>/dev/null; then
+            echo "Warning: Found site configuration with port 80: $site"
+        fi
+    done
+fi
+
 # default.conf の server_name を DOMAIN_NAME に差し替え
 if [ -n "${DOMAIN_NAME}" ]; then
     sed -i "s/server_name\s\+[^;]\+;/server_name ${DOMAIN_NAME};/" /etc/nginx/conf.d/default.conf || true

@@ -16,6 +16,9 @@ WORKDIR /var/www/html
 # ここで TLSv1.2 / TLSv1.3 のみ許可する設定を入れた default.conf を使う想定
 COPY conf/default.conf /etc/nginx/conf.d/default.conf
 
+# デフォルトサイト（ポート80）を無効化 - 42プロジェクト要件でHTTPSのみ許可
+RUN rm -f /etc/nginx/sites-enabled/default
+
 # ランタイムで証明書を生成するためのSSLディレクトリを作成
 RUN mkdir -p /etc/nginx/ssl
 
