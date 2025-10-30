@@ -6,6 +6,7 @@ services:
     build:
       context: ./requirements/nginx # Dockerfile内のCOPYやADDで参照できる範囲を指定
       dockerfile: Dockerfile
+    image: nginx
     restart: always
     volumes:
       - /home/${LOGIN}/data/wordpress:/var/www/html
@@ -23,6 +24,7 @@ services:
     build:
       context: ./requirements/mariadb
       dockerfile: Dockerfile
+    image: mariadb
     restart: always
     environment: # 初期DB構築用の値を*.envから注入
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
@@ -38,6 +40,7 @@ services:
     build:
       context: ./requirements/wordpress
       dockerfile: Dockerfile
+    image: wordpress
     restart: always
     depends_on:
       - mariadb
