@@ -1,66 +1,301 @@
+# ================================================================================
+# Docker Compose設定ファイル - Inception Project
+# ================================================================================
+# このファイルはWordPress環境を構築するための3つのコンテナを定義します：
+# 1. nginx: リバースプロキシ兼WebサーバーとしてHTTPSリクエストを処理
+# 2. mariadb: WordPressのデータベースバックエンド
+# 3. wordpress: PHP-FPMでWordPressアプリケーションを実行
+# ================================================================================
+
 version: '3.8'
 
+# サービス定義セクション
+# 各コンテナをサービスとして定義し、それぞれの設定を記述
 # 依存関係的にmariadb→wordpress→nginxの順番でコンテナ起動
 services:
+
+  # ================================================================================
+  # Nginxサービス - リバースプロキシ & Webサーバー
+  # ================================================================================
   nginx:
+    # container_name: 実行時のコンテナ名を明示的に指定
+    # 指定しない場合は「プロジェクト名_サービス名_番号」という形式で自動生成される
+    container_name: nginx
+
+    # build: Dockerイメージをビルドする設定
     build:
-      context: ./requirements/nginx # Dockerfile内のCOPYやADDで参照できる範囲を指定
+      # context: Dockerビルド時の作業ディレクトリ（ビルドコンテキスト）
+      # Dockerfile内のCOPYやADDコマンドはこのディレクトリを基準に実行される
+      context: ./requirements/nginx
+      # dockerfile: 使用するDockerfileの名前（デフォルトは"Dockerfile"）
       dockerfile: Dockerfile
+
+    # image: ビルドされたイメージに付ける名前
+    # docker imagesコマンドで確認できる名前
+    # buildセクションがある場合、ビルド後のイメージにこの名前が付けられる
     image: nginx
+
+    # restart: コンテナの再起動ポリシー
+    # always: コンテナが停止した場合、常に自動的に再起動する
+    # その他のオプション: no（再起動しない）、on-failure（エラー時のみ）、unless-stopped
     restart: always
+
+    # volumes: ボリュームマウントの設定
     volumes:
-      - /home/${LOGIN}/data/wordpress:/var/www/html
+      # wordpress_dataボリュームをコンテナ内の/var/www/htmlにマウント
+      # WordPressのファイル（PHPコード、メディアファイル等）にアクセスするため
+      # nginxはPHPファイルをwordpressコンテナのPHP-FPMに転送する
+      - wordpress_data:/var/www/html
+      # SSLプライベートキーのマウント（現在はコメントアウト）
       # - ../secrets:/etc/ssl/private:ro
+
+    # ports: ホストとコンテナのポートマッピング
+    # "ホストのポート:コンテナのポート"の形式
+    # HTTPSのデフォルトポート443をホストの443にマッピング
     ports:
       - "443:443"
+
+    # environment: 環境変数の設定
+    # .envファイルから変数を注入してコンテナ内で使用可能にする
     environment:
+      # ドメイン名をnginx設定ファイルで使用
       - DOMAIN_NAME=${DOMAIN_NAME}
+
+    # networks: コンテナが接続する仮想ネットワーク
+    # 同じネットワークに接続されたコンテナ同士は名前で通信可能
     networks:
       - inception_network
-    depends_on:
-      - wordpress
 
+    # depends_on: サービスの起動順序と依存関係を定義
+    depends_on:
+      wordpress:
+        # condition: service_healthyは、wordpressのヘルスチェックが成功してから起動
+        # 単なる起動待ちではなく、wordpressが完全に準備完了してから起動する
+        condition: service_healthy
+
+    # healthcheck: コンテナの健全性を確認する設定
+    # Docker Composeがこのチェックを定期的に実行し、コンテナの状態を監視
+    healthcheck:
+      # test: 実行するヘルスチェックコマンド
+      # curl -f: HTTPエラーコード（404等）でもfailとみなす
+      # -k: SSL証明書の検証をスキップ（自己署名証明書のため）
+      # || exit 1: curlが失敗した場合、終了コード1を返す
+      test: ["CMD-SHELL", "curl -f -k https://localhost:443 || exit 1"]
+      # interval: ヘルスチェックの実行間隔
+      interval: 10s
+      # timeout: 1回のチェックの最大実行時間
+      timeout: 5s
+      # retries: 連続で何回失敗したら「unhealthy」とみなすか
+      retries: 3
+      # start_period: コンテナ起動後、最初のチェックまでの猶予期間
+      # この期間内の失敗はretries回数にカウントされない
+      start_period: 40s
+
+  # ================================================================================
+  # MariaDBサービス - データベースサーバー
+  # ================================================================================
   mariadb:
+    # コンテナ名を明示的に「mariadb」に設定
+    # wordpress等の他のサービスからこの名前で接続できる
+    container_name: mariadb
+
+    # Dockerイメージのビルド設定
     build:
+      # MariaDBのDockerfileがあるディレクトリを指定
       context: ./requirements/mariadb
       dockerfile: Dockerfile
+
+    # ビルドされるイメージの名前
     image: mariadb
+
+    # 常に再起動する設定（データベースの可用性を保つため）
     restart: always
-    environment: # 初期DB構築用の値を*.envから注入
+
+    # environment: データベースの初期設定用環境変数
+    # MariaDBのentrypointスクリプトやDockerイメージがこれらを使用
+    environment:
+      # MySQLのrootユーザーのパスワード
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      # WordPress用に作成するデータベース名
       - MYSQL_DATABASE=${MYSQL_DATABASE}
+      # WordPress用の一般ユーザー名（rootは使わない方が安全）
       - MYSQL_USER=${MYSQL_USER}
+      # WordPress用ユーザーのパスワード
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+
+    # volumes: データベースの永続化設定
     volumes:
-      - /home/${LOGIN}/data/mariadb:/var/lib/mysql
+      # mariadb_dataボリュームをMySQLのデータディレクトリにマウント
+      # /var/lib/mysqlにはデータベースファイル、テーブル、ログ等が保存される
+      # これによりコンテナを削除してもデータが保持される
+      - mariadb_data:/var/lib/mysql
+
+    # 仮想ネットワークに接続
     networks:
       - inception_network
 
+    # ヘルスチェック設定
+    healthcheck:
+      # mysqladmin ping: MariaDBサーバーが応答可能かチェック
+      # -h localhost: localhostに接続
+      # -u root: rootユーザーとして実行
+      # -p$$MYSQL_ROOT_PASSWORD: パスワードを指定（$$はcomposeでの$のエスケープ）
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      # 10秒ごとにチェック
+      interval: 10s
+      # チェックのタイムアウトは5秒
+      timeout: 5s
+      # 5回連続失敗でunhealthyと判定
+      retries: 5
+      # 起動後30秒は猶予期間（初期化に時間がかかるため）
+      start_period: 30s
+
+  # ================================================================================
+  # WordPressサービス - PHPアプリケーション
+  # ================================================================================
   wordpress:
+    # コンテナ名を明示的に設定
+    container_name: wordpress
+
+    # WordPressイメージのビルド設定
     build:
+      # WordPress用のDockerfileがあるディレクトリ
       context: ./requirements/wordpress
       dockerfile: Dockerfile
+
+    # ビルドされるイメージ名
     image: wordpress
+
+    # 常に再起動
     restart: always
+
+    # depends_on: 依存関係の設定
+    # WordPressはデータベースなしでは動作できないため、mariadbが必要
     depends_on:
-      - mariadb
+      mariadb:
+        # mariadbのヘルスチェックが成功するまで待機
+        # データベースが完全に準備できてからWordPressを起動
+        condition: service_healthy
+
+    # environment: WordPress設定用の環境変数
     environment:
-      - WORDPRESS_DB_HOST=mariadb # 仮想ネットワーク上ではサービス名が自動でDNS登録される
+      # データベース接続設定
+      # WORDPRESS_DB_HOST: データベースサーバーのホスト名
+      # Docker Composeの仮想ネットワークでは、サービス名が自動的にDNS名として登録される
+      # したがって「mariadb」という名前でMariaDBコンテナに接続できる
+      - WORDPRESS_DB_HOST=mariadb
+      # データベース名（MariaDBサービスで作成されたDB名と一致させる）
       - WORDPRESS_DB_NAME=${MYSQL_DATABASE}
+      # データベース接続用のユーザー名
       - WORDPRESS_DB_USER=${MYSQL_USER}
+      # データベース接続用のパスワード
       - WORDPRESS_DB_PASSWORD=${MYSQL_PASSWORD}
+
+      # WordPress管理者アカウント設定（WP-CLIで初期セットアップ時に使用）
       - WP_ADMIN_USER=${WP_ADMIN_USER}
       - WP_ADMIN_PASSWORD=${WP_ADMIN_PASSWORD}
       - WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL}
+
+      # WordPress一般ユーザーアカウント設定
       - WP_USER=${WP_USER}
       - WP_USER_PASSWORD=${WP_USER_PASSWORD}
       - WP_USER_EMAIL=${WP_USER_EMAIL}
+
+      # サイトのドメイン名（wp-config.phpやサイトURLの設定に使用）
       - DOMAIN_NAME=${DOMAIN_NAME}
+
+    # volumes: WordPressファイルの永続化
     volumes:
-      - /home/${LOGIN}/data/wordpress:/var/www/html # nginxと同じ参照先
+      # wordpress_dataボリュームをWordPressのルートディレクトリにマウント
+      # /var/www/htmlにはWordPressのコアファイル、テーマ、プラグイン、
+      # アップロードされたメディアファイル等が保存される
+      # nginxコンテナも同じボリュームをマウントして、静的ファイルを配信する
+      - wordpress_data:/var/www/html
+
+    # 仮想ネットワークに接続
     networks:
       - inception_network
 
+    # ヘルスチェック設定
+    healthcheck:
+      # pidof php-fpm8.2: PHP-FPMプロセスが実行中かチェック
+      # プロセスが存在すれば0を返し、存在しなければ1を返す
+      test: ["CMD-SHELL", "pidof php-fpm8.2 || exit 1"]
+      # 10秒ごとにチェック
+      interval: 10s
+      # タイムアウト5秒
+      timeout: 5s
+      # 3回連続失敗でunhealthy
+      retries: 3
+      # 起動後40秒は猶予期間（WordPressの初期化に時間がかかるため）
+      start_period: 40s
+
+# ================================================================================
+# ネットワーク定義セクション
+# ================================================================================
+# Docker Composeで使用する仮想ネットワークを定義
 networks:
   inception_network:
-    driver: bridge 
+    # driver: bridgeはDockerのデフォルトネットワークドライバ
+    # ブリッジネットワークを使うと、同じネットワーク上のコンテナ同士が
+    # サービス名（DNS名）で通信可能になる
+    # 例: wordpressコンテナから「mariadb」という名前でDBに接続できる
+    driver: bridge
+
+# ================================================================================
+# ボリューム定義セクション
+# ================================================================================
+# 永続的なデータストレージを定義
+# コンテナを削除してもデータは保持され、再起動時に再利用される
+volumes:
+  # WordPressファイル用のボリューム
+  wordpress_data:
+    # driver: localはホストマシンのローカルストレージを使用
+    driver: local
+    # driver_opts: ドライバの詳細オプション
+    driver_opts:
+      # type: none - 特別なファイルシステムタイプを使わない（通常のディレクトリ）
+      type: none
+      # o: bind - バインドマウントを使用
+      # ホストの特定のディレクトリをボリュームとして使用
+      o: bind
+      # device: ホスト側の実際のディレクトリパス
+      # 課題要件: /home/login/data フォルダにデータを保存
+      # ${LOGIN}は環境変数から自動的に展開される
+      # このパスにWordPressのファイルが保存される
+      device: /home/${LOGIN}/data/wordpress
+
+  # MariaDBデータ用のボリューム
+  mariadb_data:
+    # ローカルドライバを使用
+    driver: local
+    # バインドマウントの設定
+    driver_opts:
+      # 通常のディレクトリをボリュームとして使用
+      type: none
+      # バインドマウント
+      o: bind
+      # ホスト側のパス: /home/login/data/mariadb
+      # このパスにデータベースファイルが保存される
+      device: /home/${LOGIN}/data/mariadb
+
+# ================================================================================
+# 補足説明
+# ================================================================================
+# 1. 名前付きボリューム vs バインドマウント:
+#    - 名前付きボリューム（wordpress_data, mariadb_data）として定義
+#    - driver_optsで実際の保存場所を/home/${LOGIN}/dataに指定
+#    - これにより「docker volume ls」で見えつつ、課題の要件も満たす
+#
+# 2. サービス間通信:
+#    - 全サービスが同じinception_networkに接続
+#    - サービス名（nginx, mariadb, wordpress）でお互いにアクセス可能
+#
+# 3. 起動順序:
+#    - depends_on と healthcheck により適切な順序で起動
+#    - mariadb起動 → mariadb健全化 → wordpress起動 → wordpress健全化 → nginx起動
+#
+# 4. データの永続化:
+#    - volumes設定によりコンテナを削除してもデータは保持される
+#    - /home/${LOGIN}/data/ 配下にすべてのデータが保存される
+# ================================================================================
